@@ -7,12 +7,12 @@
 # *
 # * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License version 2 as published
-# * by the Free Software Foundation. 
+# * by the Free Software Foundation.
 # *
 # * This program is distributed in the hope that it will be useful,
 # * but WITHOUT ANY WARRANTY; without even the implied warranty of
 # * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# * GNU General Public License for more details. 
+# * GNU General Public License for more details.
 # *
 # * You will find a copy of the terms and conditions of the GNU General Public
 # * License version 2 in the "license.txt" file or
@@ -22,7 +22,7 @@
 # *--------------------------------------------------------
 # * File Name : mobnet/UENASproc.py
 # * Created : 2015-07-31
-# * Authors : Benoit Michau 
+# * Authors : Benoit Michau
 # *--------------------------------------------------------
 #*/
 
@@ -47,7 +47,7 @@ Layer3NASEMM._initiator = 'ME'
 class UENASSigProc(UESigProc):
     '''
     UE related NAS signalling procedure
-    
+
     instance attributes:
         - Name: procedure name
         - Dom: procedure domain ('EMM' / 'ESM')
@@ -58,21 +58,21 @@ class UENASSigProc(UESigProc):
         - UE: reference to the UEd instance to which the procedure applies
         - MME: reference to the MMEd instance handling the UEd / ENBd instances
         - _nas_resp: NAS PDU to be responded by output()
-    
+
     init args:
         - UEd instance
         - potential kwargs that must match the keys in the local .Kwargs attribute
-    
+
     process(pdu=None):
         - process the NAS PDU received by the MME server from the eNB
-    
+
     output():
         - return the NAS PDU to be sent to the eNB within an S1AP structure, or None
     '''
     # to keep track of all PDU exchanged within the procedure, into the _pdu attribute
     # WNG: it will consume memory (nothing will be garbage-collected)
     TRACE = True
-    
+
     # NAS domain
     Dom = 'EMM' # / 'ESM'
     # NAS message (PD, Type) on procedure initiation
@@ -81,10 +81,10 @@ class UENASSigProc(UESigProc):
     Filter = None # or [(2, 0), ...]
     # Timer name, referencing UEmgr.UEd timer
     Timer = None # or 'T1234'
-    
+
     # specific NAS procedures parameters:
     Kwargs = {}
-    
+
     def __init__(self, ued, **kwargs):
         self.UE = ued
         self.MME = self.UE.MME
@@ -102,40 +102,40 @@ class UENASSigProc(UESigProc):
             self._s1_struct = None
         #
         self._log('DBG', 'instantiating procedure')
-    
+
     def _log(self, logtype='DBG', msg=''):
         self.UE._log(logtype, '[{0}: {1}] {2}'.format(self.Type, self.Name, msg))
-    
+
     def _trace(self, direction='UL', pdu=None):
         if self.TRACE:
             self._pdu.append( (time(), direction, pdu) )
         self.UE._log('TRACE_NAS_{0}'.format(direction), pdu.show())
         if direction == 'DL':
             self.UE._proc_out = self
-    
+
     def process(self, naspdu=None):
         self._log('ERR', '[process] unsupported')
         # feeds with any input NAS PDU value received from the UE
-    
+
     def postprocess(self, proc=None):
         # for postprocessing after a nested procedure has ended
         pass
-    
+
     def output(self):
         self._log('ERR', '[output] unsupported')
         # returns a NAS PDU to be sent to the UE
         return None
-    
+
     def init_timer(self):
         if self.Timer is not None:
             self.TimerValue = getattr(self.UE, self.Timer, 10)
             self.TimerStart = time()
             self.TimerStop = self.TimerStart + self.TimerValue
-    
+
     def timeout(self):
         self._log('WNG', 'timeout')
         self._end()
-    
+
     def _end(self, state=None):
         # remove the EMM / ESM procedure (after verifying it's on the procedure stack)
         if self.UE.Proc[self.Dom] and self == self.UE.Proc[self.Dom][-1]:
@@ -165,10 +165,10 @@ class GUTIReallocation(UENASSigProc):
         'GUTI': None, # GUTI() or None; if None, MTMSI/GUTI is generated automatically
         'TAIList': None, # TAIList()
         }
-    
+
     # delay before sending the request (in sec.)
     _tempo = 0
-    
+
     def output(self):
         #
         # change MME EMM state
@@ -195,7 +195,7 @@ class GUTIReallocation(UENASSigProc):
         # start timer and send pdu
         self.init_timer()
         return naspdu
-    
+
     def process(self, naspdu):
         self._trace('UL', naspdu)
         #
@@ -210,7 +210,7 @@ class GUTIReallocation(UENASSigProc):
         #
         self._end()
         return None
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end()
@@ -231,10 +231,10 @@ class Authentication(UENASSigProc):
         #'RAND': None, # obtained from self.MME.AUCd
         #'AUTN': None, # obtained from self.MME.AUCd
         }
-    
+
     # delay before sending the request (in sec.)
     _tempo = 0
-    
+
     def output(self):
         #
         # change MME EMM state
@@ -251,7 +251,7 @@ class Authentication(UENASSigProc):
         # if self.UE.AUTH_RAND is None, AUCd provides a random one
         # if self.UE.AUTH_RAND is fixed, AUCd uses it to generate the auth vector
         try:
-            self._vec = self.MME.AUCd.make_4g_vector(self.UE.IMSI, 
+            self._vec = self.MME.AUCd.make_4g_vector(self.UE.IMSI,
                                                      self.MME.MME_PLMN_BUF,
                                                      self.UE.AUTH_AMF,
                                                      self.UE.AUTH_RAND)
@@ -276,7 +276,7 @@ class Authentication(UENASSigProc):
         self._trace('DL', naspdu)
         self.init_timer()
         return naspdu
-    
+
     def process(self, naspdu):
         self._trace('UL', naspdu)
         if naspdu[2]() == 92:
@@ -302,7 +302,7 @@ class Authentication(UENASSigProc):
             self._log('ERR', 'authentication rejected: UE responded RES {0}, expected XRES {1}'.format(
                       hexlify(res), hexlify(self._vec[1][:8])))
             return self._reject()
-    
+
     def _process_failure(self, naspdu):
         # UE did not accept AUTN
         self._log('WNG', 'authentication failure: {0}'.format(repr(naspdu[3])))
@@ -323,7 +323,7 @@ class Authentication(UENASSigProc):
                 self._log('ERR', 'authentication failure: invalid AUTS from the UE')
                 return self._reject()
             else:
-                # SQN should have be resynched successfully in the AUCd, 
+                # SQN should have be resynched successfully in the AUCd,
                 # so we restart with an AUTH REQ / RESP cycle
                 self._log('DBG', 'SQN resynchronized in the AUC')
                 return self.output()
@@ -333,7 +333,7 @@ class Authentication(UENASSigProc):
             self._clean_sec_ctxt()
             # TBC: let the UE stop the radio connection
             return None
-    
+
     def _clean_sec_ctxt(self):
         # keep track of the auth vector that made everything fail
         self.UE.SEC['vec'] = self._vec
@@ -346,7 +346,7 @@ class Authentication(UENASSigProc):
             del self.UE.SEC['KSI'][self.Kwargs['NASKSI']]
         except:
             pass
-    
+
     def _reject(self):
         rej = EPS_AUTHENTICATION_REJECT()
         self._clean_sec_ctxt()
@@ -356,7 +356,7 @@ class Authentication(UENASSigProc):
         self._end(state='EMM-DEREGISTERED')
         self._trace('DL', rej)
         return rej
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end()
@@ -377,10 +377,10 @@ class SecurityModeControl(UENASSigProc):
         'NonceUE': None, # 4-bytes
         'NonceMME': None, # 4-bytes
         }
-    
+
     # delay before sending the request (in sec.)
     _tempo = 0
-    
+
     def output(self):
         #
         # change MME EMM state
@@ -399,7 +399,7 @@ class SecurityModeControl(UENASSigProc):
         else:
             # a valid KSI exists (at least 1 successful auth happened)
             if not isinstance(self.Kwargs['NASKSI'], int) or self.Kwargs['NASKSI'] not in self.UE.SEC['KSI']:
-                # 2) get the NASKSI established during last successful auth 
+                # 2) get the NASKSI established during last successful auth
                 # default behavior
                 self.Kwargs['NASKSI'] = self.UE.SEC['active']
             else:
@@ -442,7 +442,7 @@ class SecurityModeControl(UENASSigProc):
         self._trace('DL', naspdu)
         self.init_timer()
         return naspdu
-    
+
     def process(self, naspdu):
         self._trace('UL', naspdu)
         self._end()
@@ -464,7 +464,7 @@ class SecurityModeControl(UENASSigProc):
                   self.UE.SEC['EEA'], self.UE.SEC['EIA']))
         self.UE.SEC['SMC'] = False
         return None
-    
+
     def _clean_sec_ctxt(self):
         # delete the NASKSI context selected for SMC, and associated data
         del self.UE.SEC['KSI'][self.Kwargs['NASKSI']]
@@ -472,7 +472,7 @@ class SecurityModeControl(UENASSigProc):
         self.UE.SEC['SMC'] = False
         self.UE.SEC['Knas_enc'] = None
         self.UE.SEC['Knas_int'] = None
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end()
@@ -489,10 +489,10 @@ class Identification(UENASSigProc):
     Kwargs = {
         'IDType': None # 1: IMSI, 2: IMEI, 3: IMEISV, 4: TMSI, private/ffu else
         }
-    
+
     # delay before sending the request (in sec.)
     _tempo = 0
-    
+
     def output(self):
         #
         # change MME EMM state
@@ -513,7 +513,7 @@ class Identification(UENASSigProc):
         self._trace('DL', naspdu)
         self.init_timer()
         return naspdu
-    
+
     def process(self, naspdu):
         # get the NAS msg content
         self._trace('UL', naspdu)
@@ -563,7 +563,7 @@ class Identification(UENASSigProc):
             ret = None
         #
         return ret
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end()
@@ -582,10 +582,10 @@ class EMMInformation(UENASSigProc):
         'TZTime': None, # 7-bytes bytes, time-zone and time
         'DTime': None, # bytes, daylight saving time
         }
-    
+
     # delay before sending the request (in sec.)
     _tempo = 0
-    
+
     def output(self):
         # prepare the NAS msg
         naspdu = EMM_INFORMATION()
@@ -631,10 +631,10 @@ class MMEDetach(UENASSigProc):
         'DetType': None, # uint < 16, (1, 2 or 3)
         'EMMCause': None # uint
         }
-    
+
     # delay before sending the request (in sec.)
     _tempo = 0
-    
+
     def output(self):
         #
         # change MME EMM state
@@ -659,7 +659,7 @@ class MMEDetach(UENASSigProc):
         # start timer and send pdu
         self.init_timer()
         return naspdu
-    
+
     def process(self, naspdu):
         self._trace('UL', naspdu)
         self._log('INF', 'done')
@@ -668,7 +668,7 @@ class MMEDetach(UENASSigProc):
         self.UE.gtp_disable()
         self.UE.init_esm()
         return None
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end()
@@ -691,7 +691,7 @@ class PagingRequest(UENASSigProc):
         'CNDomain': 'ps', # or 'cs', ENUM
         'TAIList': None
         }
-    
+
     def output(self):
         # prepare the list of arguments for the S1AP msg
         #
@@ -705,7 +705,7 @@ class PagingRequest(UENASSigProc):
                 self.Kwargs['UEPagingID'] = ('iMSI', encode_bcd(self.UE.IMSI))
             else:
                 # paging with MMEC, M-TMSI
-                self.Kwargs['UEPagingID'] = ('s-TMSI', {'mMEC': self.MME.MME_MMEC_BUF, 
+                self.Kwargs['UEPagingID'] = ('s-TMSI', {'mMEC': self.MME.MME_MMEC_BUF,
                                                         'm-TMSI': self.UE.EMM['TMSI']})
         #
         if self.Kwargs['DRX'] is None and self.UE.CAP['DRX'] is not None:
@@ -724,7 +724,7 @@ class PagingRequest(UENASSigProc):
         self.UE._s1dl_struct = {'Code': 10,
                                 'Kwargs': self.Kwargs}
         return None
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         # remove EMM / ESM the procedure (after verifying it's in the procedure stack)
@@ -743,7 +743,7 @@ class NASDownlinkNASTransport(UENASSigProc):
     Kwargs = {
         'NASContainer': None, # contains the SMS-CP msg
         }
-    
+
     def output(self):
         naspdu = DOWNLINK_NAS_TRANSPORT()
         #
@@ -807,7 +807,7 @@ class Attach(UENASSigProc):
         'T3346': None, # uint < 255, to 1-byte bytes
         #'T3402': None, # uint < 255, to 1-byte bytes
         }
-    
+
     def process(self, naspdu):
         #
         if naspdu[1]() == 2:
@@ -900,7 +900,7 @@ class Attach(UENASSigProc):
         #
         # otherwise, go directly to postprocess
         return self.postprocess()
-    
+
     def postprocess(self, proc=None):
         #
         # if an authentication just happened, we take the new security context into use
@@ -1018,8 +1018,13 @@ class Attach(UENASSigProc):
         self._trace('DL', attacc)
         # we always reassign GUTI, so an Attach complete is always expected
         self.init_timer()
+
+        self._log('INF', '8===========================================D PDU: {}'.format(hex(attacc)))
+        self._log('INF', '8===========================================D PDU: {}'.format(repr(attacc)))
+        self._log('INF', '8===========================================D PDU: {}'.format(attacc.show()))
+
         return attacc
-    
+
     def _process_complete(self, naspdu):
         # We got the Attach complete
         # process potential piggy-backed ESM msg
@@ -1042,7 +1047,7 @@ class Attach(UENASSigProc):
         #
         self._end(state='EMM-REGISTERED')
         return None
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end(state='EMM-DEREGISTERED')
@@ -1055,7 +1060,7 @@ class UEDetach(UENASSigProc):
     Filter = []
     Timer = None
     Kwargs = {}
-    
+
     def process(self, naspdu):
         # trace the NAS msg content
         self._trace('UL', naspdu)
@@ -1112,7 +1117,7 @@ class TrackingAreaUpdate(UENASSigProc):
         'EMMCause': None, # uint < 255
         'T3346': None, # bytes
         }
-    
+
     def process(self, naspdu):
         #
         # trace the NAS msg content
@@ -1205,7 +1210,7 @@ class TrackingAreaUpdate(UENASSigProc):
         #
         # otherwise, go directly to postprocess
         return self.postprocess()
-    
+
     def postprocess(self, proc=None):
         #
         # if an authentication just happened, we take the new security context into use
@@ -1271,7 +1276,7 @@ class TrackingAreaUpdate(UENASSigProc):
         self.init_timer()
         self._trace('DL', tauacc)
         return tauacc
-    
+
     def _process_complete(self, naspdu):
         #
         # remove the old TMSI
@@ -1281,14 +1286,14 @@ class TrackingAreaUpdate(UENASSigProc):
         self.MME.TMSI[self._tmsi] = self.UE.IMSI
         self.UE.EMM['TMSI'] = self._tmsi
         self._log('INF', 'completed, GUTI reallocated, TMSI {0}'.format(hexlify(self._tmsi)))
-        # disable possible *freshness* of the security context 
+        # disable possible *freshness* of the security context
         # (as no RAB context is established during TAU)
         if self.UE.SEC['Fresh']:
-            self.UE.SEC['Fresh'] = False 
+            self.UE.SEC['Fresh'] = False
         #
         self._end()
         return None
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end()
@@ -1310,7 +1315,7 @@ class ServiceRequest(UENASSigProc):
         'T3442': None, # uint < 255, to 1-byte bytes
         'T3346': None, # bytes
         }
-    
+
     def process(self, naspdu):
         #
         # trace the NAS msg content
@@ -1328,7 +1333,7 @@ class ServiceRequest(UENASSigProc):
         #
         # otherwise, go directly to postprocess
         return self.postprocess()
-    
+
     def postprocess(self, proc=None):
         #
         # if an authentication just happened, we take the new security context into use
@@ -1354,7 +1359,7 @@ class ServiceRequest(UENASSigProc):
             return proc.output()
         else:
             return None
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end()
@@ -1368,7 +1373,7 @@ class NASUplinkNASTransport(UENASSigProc):
     Filter = []
     Timer = None
     Kwargs = {}
-    
+
     def process(self, naspdu):
         # trace the NAS msg content
         self._trace('UL', naspdu)
@@ -1428,7 +1433,7 @@ class DefaultEPSBearerCtxtAct(UENASSigProc):
         'ProtConfig': None, # bytes
         'ConType': None, # uint < 16
         }
-    
+
     def output(self):
         #
         # change ESM state
@@ -1466,7 +1471,7 @@ class DefaultEPSBearerCtxtAct(UENASSigProc):
         self._trace('DL', esmpdu)
         self.init_timer()
         return esmpdu
-    
+
     def process(self, esmpdu):
         self._trace('UL', esmpdu)
         #
@@ -1497,13 +1502,13 @@ class DefaultEPSBearerCtxtAct(UENASSigProc):
         #
         self._end()
         return None
-    
+
     def _end(self, state=None):
         UENASSigProc._end(self, state='PROCEDURE-TRANSACTION-INACTIVE')
         # delete ESM transaction
         if self.Kwargs['TI'] in self.UE.ESM['trans']:
             del self.UE.ESM['trans'][self.Kwargs['TI']]
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         try:
@@ -1570,7 +1575,7 @@ class EPSBearerCtxtDeact(UENASSigProc):
         'ProtConfig': None, # # bytes or ProtConfig()
         'T3396': None, # bytes
         }
-    
+
     def output(self):
         #
         # change ESM state
@@ -1603,7 +1608,7 @@ class EPSBearerCtxtDeact(UENASSigProc):
         self._trace('DL', esmpdu)
         self.init_timer()
         return esmpdu
-    
+
     def process(self, esmpdu):
         self._trace('UL', esmpdu)
         #
@@ -1623,13 +1628,13 @@ class EPSBearerCtxtDeact(UENASSigProc):
         #
         self._end()
         return None
-    
+
     def _end(self, state=None):
         UENASSigProc._end(self, state='PROCEDURE-TRANSACTION-INACTIVE')
         # delete ESM transaction
         if self.Kwargs['TI'] in self.UE.ESM['trans']:
             del self.UE.ESM['trans'][self.Kwargs['TI']]
-    
+
     def timeout(self):
         UENASSigProc.timeout(self)
         self._end()
@@ -1644,7 +1649,7 @@ class ESMInformation(UENASSigProc):
     Kwargs = {
         'TI': 0, # transaction ID, uint8
         }
-    
+
     def output(self):
         #
         # change ESM state
@@ -1655,7 +1660,7 @@ class ESMInformation(UENASSigProc):
         self._trace('DL', esmpdu)
         self.init_timer()
         return esmpdu
-    
+
     def process(self, esmpdu):
         self._trace('UL', esmpdu)
         #
@@ -1707,8 +1712,9 @@ class PDNConnectRequest(UENASSigProc):
         'ProtConfig': None, # bytes or ProtConfig()
         'T3396': None, # bytes
         }
-    
+
     def process(self, esmpdu):
+        self._log('INF', '8===========================================D Processing PDN connect request')
         #
         self._trace('UL', esmpdu)
         # change ESM state
@@ -1746,7 +1752,7 @@ class PDNConnectRequest(UENASSigProc):
             return proc.output()
         #
         return self.postprocess()
-    
+
     def postprocess(self, proc=None):
         #
         # if Proc is DefaultEPSBearerCtxtAct, everything OK, just exit
@@ -1757,6 +1763,7 @@ class PDNConnectRequest(UENASSigProc):
         # if acceptable, start a DefaultEPSBearerCtxtAct
         # otherwise, send a PDN CON REJECT
         trans = self.UE.ESM['trans'][self._tid]
+        self._log('INF', '8===========================================D {}\n{}'.format(self._tid, self.UE.ESM['trans']))
         cause = None
         ctxt = self.UE.nas_build_pdn_default_ctxt(trans['APN'])
         if ctxt is None:
@@ -1764,11 +1771,13 @@ class PDNConnectRequest(UENASSigProc):
         elif trans['PDNType'] not in (ctxt['IP'][0], 3):
             cause = 28 # unknown PDN type
         elif 'ProtConfigReq' not in trans:
-            cause = 31 # reject, unspecified (no ProtConfig request)
+            ip, pc = self.UE.nas_build_pdn_protconfig_ip_only(ctxt)
+            self._log('INF', '8===========================================D 31 reject, unspecified (no ProtConfig request)')
+            #cause = 31 # reject, unspecified (no ProtConfig request)
         else:
             if trans['PDNType'] == 3:
                 # PDNType 1: IPv4, 2: IPv6, 3: IPv4v6
-                # IPv4v6 requested, hence use the one from the network 
+                # IPv4v6 requested, hence use the one from the network
                 trans['PDNType'] = ctxt['IP'][0]
             ip, pc = self.UE.nas_build_pdn_protconfig(ctxt, trans['ProtConfigReq'])
             if ip is None or pc is None:
@@ -1783,7 +1792,7 @@ class PDNConnectRequest(UENASSigProc):
         trans['ProcConfigResp'] = pc
         trans['ctxt'] = ctxt
         #
-        ebt = trans['EBT']
+        ebt = trans.get('EBT', 0)
         if trans['APN'] is not None:
             apn = '{0}{1}'.format(chr(len(trans['APN'])), trans['APN'])
         else:
@@ -1799,7 +1808,7 @@ class PDNConnectRequest(UENASSigProc):
                                      PDNAddr=pdn_addr,
                                      ProtConfig=pc)
         return proc.output()
-        
+
     def _reject(self, cause=111):
         if self.Kwargs['ESMCause'] is None:
             if cause is None:
@@ -1825,7 +1834,7 @@ class PDNConnectRequest(UENASSigProc):
             del self.UE.ESM['trans'][self._tid]
         self._trace('DL', esmpdu)
         return esmpdu
-        
+
 
 # UE-requested PDN disconnect, 6.5.2
 # UE: PDN DISCONNECT REQUEST -> MME [: PDN DISCONNECT REJECT -> UE]
@@ -1840,7 +1849,7 @@ class PDNDisconnectRequest(UENASSigProc):
         'ESMCause': None, # uint8
         'ProtConfig': None, # btyes or ProtConfig()
         }
-    
+
     def process(self, esmpdu):
         #
         self._trace('UL', esmpdu)
@@ -1876,12 +1885,12 @@ class PDNDisconnectRequest(UENASSigProc):
                                      TI=self._tid,
                                      ESMCause=36)
         return proc.output()
-    
+
     def postprocess(self, proc=None):
         # proc should always be EPSBearerCtxtDeact
         self._end(state='PROCEDURE-TRANSACTION-INACTIVE')
         return None
-    
+
     def _reject(self, cause=111):
         if self.Kwargs['ESMCause'] is None:
             if cause is None:

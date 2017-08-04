@@ -7,12 +7,12 @@
 # *
 # * This program is free software: you can redistribute it and/or modify
 # * it under the terms of the GNU General Public License version 2 as published
-# * by the Free Software Foundation. 
+# * by the Free Software Foundation.
 # *
 # * This program is distributed in the hope that it will be useful,
 # * but WITHOUT ANY WARRANTY; without even the implied warranty of
 # * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-# * GNU General Public License for more details. 
+# * GNU General Public License for more details.
 # *
 # * You will find a copy of the terms and conditions of the GNU General Public
 # * License version 2 in the "license.txt" file or
@@ -22,9 +22,9 @@
 # *--------------------------------------------------------
 # * File Name : mobnet/UEmgr.py
 # * Created : 2015-07-27
-# * Authors : Benoit Michau 
+# * Authors : Benoit Michau
 # *--------------------------------------------------------
-#*/ 
+#*/
 
 # export filtering
 #__all__ = ['UEd']
@@ -54,24 +54,24 @@ from .ENBmgr import Paging
 
 
 # UE capability keywords
-_Cap_kw = ('UENetCap', 'UESecCap', 'UERadCap', 'MSNetCap', 'MSCm2', 'MSCm3', 
+_Cap_kw = ('UENetCap', 'UESecCap', 'UERadCap', 'MSNetCap', 'MSCm2', 'MSCm3',
            'DRX', 'SuppCodecs', 'AddUpdType', 'VoicePref', 'DevProp', 'MSFeatSup')
 
 
 class UEd(SigStack):
     '''
     The UEd instance handles all S1AP / NAS / EMM / ESM procedures related to a specific UE.
-    
+
     attributes:
         IMSI: IMSI of the UE
         MME: reference to the MMEd parent instance
         ENB: eNB global ID of the eNB to which the UE is connected
-        
+
         SEC: NAS security context
         EMM: NAS mobility context
         ESM: NAS session context
         CAP: list all capabilities reported by the UE
-        
+
         Proc: dict of ongoing procedures (UESigProc), indexed by type ('S1', 'EMM', 'ESM')
         Proc_last: procedure code of the last S1 procedure to have sent an S1AP PDU to the eNB
     '''
@@ -220,19 +220,19 @@ class UEd(SigStack):
     #
     # SMS-CP
     TC1star = 4
-    
-    
+
+
     def _log(self, logtype='DBG', msg=''):
         if logtype[:9] in ('TRACE_NAS', 'TRACE_SMS'):
             self.MME._log(logtype, '[UE: {0}]\n{1}'.format(self.IMSI, msg))
         else:
             self.MME._log(logtype, '[UE: {0}] {1}'.format(self.IMSI, msg))
-    
+
     #----------------#
     # initialization #
     # routines       #
     #----------------#
-    
+
     def __init__(self, imsi, mmed):
         # init identity
         self.IMSI = imsi
@@ -260,13 +260,13 @@ class UEd(SigStack):
         self.init_emm()
         self.init_esm()
         self.init_sms()
-    
+
     def init_cap(self):
         if not hasattr(self, 'CAP'):
             self.CAP = {}
         for kw in _Cap_kw:
             self.CAP[kw] = None
-    
+
     def init_s1(self):
         if not hasattr(self, 'S1'):
             self.S1 = {}
@@ -277,7 +277,7 @@ class UEd(SigStack):
         self.s1_unset()
         # s1dl_struct serves as an indicator to the S1 layer to send back specific S1 DL message
         self._s1dl_struct = None
-    
+
     def init_sec(self):
         if not hasattr(self, 'SEC'):
             self.SEC = {}
@@ -291,7 +291,7 @@ class UEd(SigStack):
         self.SEC['Knas_int'] = None # bytes, cached NAS integr prot key
         self.SEC['SMC'] = False # if True, triggers an SMC (re-selecting auth vec and/or EEA-EIA)
         self.SEC['Fresh'] = False # if True, indicates the UL NAS count has been reset to the START value
-    
+
     def init_emm(self):
         if not hasattr(self, 'EMM'):
             self.EMM = {}
@@ -307,7 +307,7 @@ class UEd(SigStack):
         # EMM procedures, 2-stage stack of procedures
         # Auth, SMC, Ident can be run within UE-initiated procedure
         self.Proc['EMM'] = []
-    
+
     def init_esm(self):
         if not hasattr(self, 'ESM'):
             self.ESM = {}
@@ -331,14 +331,14 @@ class UEd(SigStack):
         # ESM procedures, 2-stage stack of procedures
         # bearer mgt can be run within UE-initiated procedure
         self.Proc['ESM'] = []
-    
+
     def init_ipaddr(self, ip, apn=None):
         if apn is None:
             for apn in self.ESM_PDN:
                 self.ESM_PDN[apn]['IP'][1] = ip
         elif apn in self.ESM_PDN:
             self.ESM_PDN[apn]['IP'][1] = ip
-    
+
     def init_sms(self):
         if not hasattr(self, 'SMS'):
             self.SMS = {}
@@ -347,12 +347,12 @@ class UEd(SigStack):
         #
         # SMS-CP procedures, indexed by SMS-CP transaction ID
         self.Proc['SMS'] = {}
-    
+
     #--------------#
     # printing     #
     # device infos #
     #--------------#
-    
+
     def show_ident(self):
         print('IMSI: {0}'.format(self.IMSI))
         if self.EMM['TMSI']:
@@ -361,7 +361,7 @@ class UEd(SigStack):
             print('IMEI: {0}'.format(self.EMM['IMEI']))
         if self.EMM['IMEISV']:
             print('IMEISV: {0}'.format(self.EMM['IMEISV']))
-    
+
     def show_cap(self, with_asn1=False):
         if self.CAP['UENetCap']:
             print('UE Network Capability:\n{0}\n'.format(self.CAP['UENetCap'].show()))
@@ -381,12 +381,12 @@ class UEd(SigStack):
             else:
                 print('UE Radio Capability:\n{0}\n'.format(self.CAP['UERadCap'][1]))
         # TODO: Device Property, Voice Preference, MS Feature Support, Additional Update Type, Supplementary Codecs
-    
+
     #--------------#
     # S1 interface #
     # management   #
     #--------------#
-    
+
     def s1_set(self, enb_gid, mme_ue_id, enb_ue_id):
         self.ENB = self.MME.ENB[enb_gid]
         self.S1['MME_UE_ID'] = mme_ue_id
@@ -394,7 +394,7 @@ class UEd(SigStack):
         # S1AP procedures, multiple procedures can run in parallel
         # indexed by S1AP code -> S1AP procedure instance
         self.Proc['S1'] = {}
-    
+
     def s1_unset(self):
         self.ENB = None
         if self.S1['MME_UE_ID'] in self.MME.UE_MME_ID:
@@ -406,7 +406,7 @@ class UEd(SigStack):
         if self._proc_mme:
             self._log('DBG', '[s1_unset] {0} MME-initiated procedure(s) resetted'.format(len(self._proc_mme)))
         self._proc_mme = deque()
-    
+
     def s1_setup_initial_ctxt(self, rabid_list):
         # 1 or multiple ERAB-ID can be provided
         # prepare the list of ERAB to be setup
@@ -454,7 +454,7 @@ class UEd(SigStack):
                                             'integrityProtectionAlgorithms': ((usc[9]()<<15) + (usc[10]()<<14) + (usc[11]()<<13), 16)},
                                         'SecurityKey': convert_str_bitstr(kenb)}}
         # TODO: it may be required to add the UERadioCapability: self.CAP['UERadCap'][0]
-    
+
     def s1_setup_erab(self, rabid_list):
         # 1 or multiple ERAB-ID can be provided
         # prepare the list of ERAB to be setup
@@ -479,7 +479,7 @@ class UEd(SigStack):
                                             'uEaggregateMaximumBitRateDL': self.ESM_BR_AGGR_BITRATE_DL,
                                             'uEaggregateMaximumBitRateUL': self.ESM_BR_AGGR_BITRATE_UL},
                                         'E_RABToBeSetupListBearerSUReq': erab_list}}
-    
+
     def s1_release_erab(self, rabid_list):
         # 1 or multiple ERAB-ID can be provided
         # prepare the list of ERAB to be released
@@ -502,12 +502,12 @@ class UEd(SigStack):
                                            'uEaggregateMaximumBitRateDL': self.ESM_BR_AGGR_BITRATE_DL,
                                            'uEaggregateMaximumBitRateUL': self.ESM_BR_AGGR_BITRATE_UL},
                                         'E_RABList': erab_list}}
-        
+
     def s1_release_ctxt(self, cause=('nas', 'unspecified')):
         # prepare the S1AP DL message to start a UEContextRelease
         self._s1dl_struct = {'Code': 23,
                              'Kwargs': {'Cause': cause}}
-    
+
     def gtp_enable(self, rabid=None):
         if rabid is None:
             # activate all default E-RAB
@@ -516,7 +516,7 @@ class UEd(SigStack):
                     self.gtp_enable_rab(rabid)
         elif rabid in self.ESM['RAB'] and 'IP' in self.ESM['RAB'][rabid]:
             self.gtp_enable_rab(rabid)
-    
+
     def gtp_enable_rab(self, rabid):
         rab = self.ESM['RAB'][rabid]
         if rabid not in self.ESM['active']:
@@ -525,7 +525,7 @@ class UEd(SigStack):
                   rabid, rab['IP'][1]))
         self.MME.GTPd.add_mobile(rab['IP'][1], rab['ENB-TransportLayerAddress'],
                                  rab['SGW-GTP-TEID'], rab['ENB-GTP-TEID'])
-    
+
     def gtp_disable(self, rabid=None):
         if rabid is None:
             # deactivate all default E-RAB
@@ -534,7 +534,7 @@ class UEd(SigStack):
                     self.gtp_disable_rab(rabid)
         elif rabid in self.ESM['RAB'] and 'IP' in self.ESM['RAB'][rabid]:
             self.gtp_disable_rab(rabid)
-    
+
     def gtp_disable_rab(self, rabid):
         rab = self.ESM['RAB'][rabid]
         if rabid in self.ESM['active']:
@@ -542,12 +542,12 @@ class UEd(SigStack):
         self._log('DBG', '[gtp_disable_rab] deactivating GTP tunnel for E-RAB-ID {0}, mobile IP: {1}'.format(
                   rabid, rab['IP'][1]))
         self.MME.GTPd.rem_mobile(rab['IP'][1])
-    
+
     #------------#
     # S1AP-PDU   #
     # dispatcher #
     #------------#
-    
+
     def process_pdu(self, pdu):
         # PDU can correspond to:
         # 1) a Class 2 eNB-initiated procedure -> process, no response (or send error)
@@ -616,7 +616,7 @@ class UEd(SigStack):
                     self._proc.append(proc)
                 self.Proc_last = proc.Code
                 return proc.output()
-    
+
     def init_s1_proc(self, proc, **kwargs):
         #
         # DownlinkNASTransport,
@@ -640,13 +640,13 @@ class UEd(SigStack):
             self._proc.append(proc)
         self.Proc_last = proc.Code
         return proc
-    
+
     #------------------------#
     # routines to compute    #
     # specific UE-associated #
     # parameters             #
     #------------------------#
-    
+
     def nas_reset_proc(self):
         if self.Proc['EMM']:
             for emm_proc in reversed(self.Proc['EMM']):
@@ -660,7 +660,7 @@ class UEd(SigStack):
         if self._proc_mme:
             self._log('DBG', '[nas_reset_proc] {0} MME-initiated procedure(s) resetted'.format(len(self._proc_mme)))
         self._proc_mme = deque()
-    
+
     def nas_build_ueseccap(self):
         # if we have UENetCap (and MSNetCap), we can build UESecCap
         if self.CAP['UENetCap']:
@@ -693,21 +693,21 @@ class UEd(SigStack):
         else:
             self._log('ERR', 'unable to set UE security capabilities')
             self.CAP['UESecCap'] = None
-    
+
     def nas_build_tailist(self):
         # build a list with the unique TAI reported by the eNB at the S1 layer for the UE radio session
         # needed for Attach() and TrackingAreaUpdate()
         plmn, tac = self.S1['TAI']
         p_tai = PartialTAIList0(plmn, TAC=tac)
         return TAIList(p_tai)
-    
+
     def nas_build_guti(self):
         # create a GUTI with a new M-TMSI
         return GUTI(MCCMNC=self.MME.MME_PLMN,
                     MMEGroupID=self.MME.MME_GID,
                     MMECode=self.MME.MME_MMEC,
                     MTMSI=self.MME.get_new_tmsi())
-    
+
     def nas_build_pdn_default_ctxt(self, apn=None):
         if apn in (None, ''):
             # return default APN
@@ -721,7 +721,11 @@ class UEd(SigStack):
             return self.ESM_PDN[apn]
         else:
             return None
-    
+
+    def nas_build_pdn_protconfig_ip_only(self, ctxt):
+        ip = inet_aton(ctxt['IP'][1])
+        return ip, ProtConfig()
+
     def nas_build_pdn_protconfig(self, ctxt, req):
         # ctxt is the PDN ctxt returned by build_pdn_default_ctxt() for a given APN
         # req is the ProtConfig request from the UE
@@ -800,7 +804,7 @@ class UEd(SigStack):
                         pap_id = pap_data[1:1+ord(pap_data[0])]
                         pap_pwd = pap_data[2+ord(pap_data[0]):]
                     except:
-                        pap_id, pap_pwd = '', '' 
+                        pap_id, pap_pwd = '', ''
                     self._log('DBG', 'PDN config, PAP id / pwd: {0} / {1}'.format(pap_id, pap_pwd))
                     resp_ncp = NCP(Code=2, Identifier=req_ncp[1](), Data='\0')
                     resp.append( ProtID(ID=49187, content=resp_ncp) )
@@ -848,14 +852,14 @@ class UEd(SigStack):
                 self._log('ERR', '[nas_build_pdn_protconfig] invalid UE IP format')
         #
         return ip, resp
-    
+
     def nas_get_new_rabid(self):
         # provide the next available RAB-ID
         for rabid in range(5, 16):
             if rabid not in self.ESM['RAB']:
                 return rabid
         return None
-    
+
     def nas_build_rab_default(self, rabid, apn):
         if apn not in self.ESM_PDN:
             self._log('WNG', '[nas_build_rab_default] unknown APN: {0}'.format(apn))
@@ -881,7 +885,7 @@ class UEd(SigStack):
             'SGW-GTP-TEID': self.MME.get_new_teid(),
             'ENB-GTP-TEID': None, # will be updated after the eNB setup the ERAB
             }
-    
+
     def nas_need_auth(self, proc=None):
         if not self.AUTH_ACT:
             return False
@@ -915,7 +919,7 @@ class UEd(SigStack):
                 return False
             else:
                 return True
-    
+
     def nas_need_smc(self, proc=None):
         if not self.SMC_ACT:
             return False
@@ -932,12 +936,12 @@ class UEd(SigStack):
             # instead of within s1_setup_initial_ctxt()
             self.SEC['Fresh'] = False
         return self.SEC['SMC'] or fresh
-    
+
     #----------#
     # NAS-PDU  #
     # security #
     #----------#
-    
+
     def nas_process_sec(self, sec_naspdu):
         self._log('TRACE_SEC_UL', sec_naspdu.show())
         # apply the current security context to the NASPDU to process
@@ -960,7 +964,7 @@ class UEd(SigStack):
             return self.nas_process_sec_unknown(sec_naspdu)
         #
         # 3) verify integrity protection
-        if eia != 0: 
+        if eia != 0:
             if self.SEC['Knas_int'] is None:
                 self.SEC['Knas_int'] = conv_A7(kasme, 2, eia)[16:32]
             sec_naspdu.EIA = getattr(CM, 'EIA{0}'.format(eia))
@@ -995,7 +999,7 @@ class UEd(SigStack):
             naspdu = parse_L3(sec_naspdu.get_deciphered())
         #
         return naspdu
-    
+
     def nas_process_sec_unknown(self, sec_naspdu):
         # if no active / valid KSI, or selected EEA / EIA
         # be opportunistic: guess it's not ciphered or using EEA0
@@ -1011,7 +1015,7 @@ class UEd(SigStack):
         else:
             self._log('ERR', 'unable to decipher NASPDU')
             return None
-    
+
     def nas_process_servreq(self, sec_naspdu):
         # handle the security of this NAS special message
         ue_ksi = sec_naspdu[2]()
@@ -1056,7 +1060,7 @@ class UEd(SigStack):
         # increment NAS UL count
         self.SEC['KSI'][ue_ksi][0] += 1
         return self._nas_process_servreq(sec_naspdu)
-    
+
     def _nas_process_servreq(self, sec_naspdu):
         if self.Proc['EMM']:
             # an EMM procedure is already ongoing
@@ -1073,7 +1077,7 @@ class UEd(SigStack):
         if self.TRACE_NAS:
             self._proc.append(proc)
         return proc.process(sec_naspdu)
-    
+
     def nas_output_sec(self, naspdu):
         # Few procedures might return multiple NAS-PDU from a single uplink message (e.g. SMS)
         # -> this specific message dispatch is handled here
@@ -1084,7 +1088,7 @@ class UEd(SigStack):
             return retpdu
         else:
             return self._nas_output_sec(naspdu)
-    
+
     def _nas_output_sec(self, naspdu):
         # apply the current security context to the NASPDU to output
         #
@@ -1100,7 +1104,7 @@ class UEd(SigStack):
         #
         # 2) check for naspdu type: security mode command
         if isinstance(naspdu, SECURITY_MODE_COMMAND):
-            # if security mode command, 
+            # if security mode command,
             # integrity protection only + new security context
             sec_naspdu[0].Pt = 3
         else:
@@ -1160,12 +1164,12 @@ class UEd(SigStack):
         #
         self._log('TRACE_SEC_DL', sec_naspdu.show())
         return sec_naspdu
-    
+
     #------------#
     # NAS-PDU    #
     # dispatcher #
     #------------#
-    
+
     def process_naspdu(self, naspdu_buf):
         '''
         process the whole NAS PDU, as received within the S1AP PDU
@@ -1199,7 +1203,7 @@ class UEd(SigStack):
         #
         if ret_naspdu:
             return self.nas_output_sec(ret_naspdu)
-    
+
     def _process_naspdu(self, naspdu):
         #
         # check the Protocol Discriminator and Type
@@ -1242,6 +1246,7 @@ class UEd(SigStack):
                           repr(naspdu[3]), proc.Name))
                 return None
             elif (pd, ty) in self.Proc['EMM'][-1].Filter:
+                self._log('INF', '8===========================================D A')
                 proc = self.Proc['EMM'][-1]
                 # if the procedure ends, it will remove itself from the self.Proc list
                 ret_naspdu = proc.process(naspdu)
@@ -1273,6 +1278,7 @@ class UEd(SigStack):
                           repr(naspdu[3]), proc.Name))
                 return None
             elif (pd, ty) in self.Proc['ESM'][-1].Filter:
+                self._log('INF', '8===========================================D B')
                 proc = self.Proc['ESM'][-1]
                 ret_naspdu = proc.process(naspdu)
                 if ret_naspdu is None and self.Proc['ESM']:
@@ -1290,6 +1296,7 @@ class UEd(SigStack):
         #
         # 3) check for starting a new NAS procedure
         if ty in UESigProcDispatch:
+            self._log('INF', '8===========================================D C')
             proc = UESigProcDispatch[ty](self)
             if self.TRACE_NAS:
                 self._proc.append(proc)
@@ -1305,36 +1312,37 @@ class UEd(SigStack):
             self._log('WNG', '[process_naspdu] EMM STATUS with cause: {0}'.format(repr(naspdu[3])))
         elif (pd, ty) == (2, 232):
             self._log('TRACE_NAS_UL', naspdu.show())
-            self._log('WNG', '[process_naspdu] ESM STATUS with cause: {0}'.format(repr(naspdu[3])))        
+            self._log('WNG', '[process_naspdu] ESM STATUS with cause: {0}'.format(repr(naspdu[3])))
         #
         # 5) EMM / ESM message out of any procedure
         else:
+            self._log('INF', '8===========================================D D')
             self._log('TRACE_NAS_UL', naspdu.show())
             self._log('WNG', '[process_naspdu] unexpected NAS message (PD {0}, Type {1}), sending STATUS 98'.format(pd, ty))
             # Cause 98: Message type not compatible with the protocol state
             stat = EMM_STATUS(EMMCause=98)
             self._log('TRACE_NAS_DL', stat.show())
             return stat
-    
+
     def init_nas_proc(self, proc, **kwargs):
         proc = proc(self, **kwargs)
         self.Proc[proc.Dom].append(proc)
         if self.TRACE_NAS:
             self._proc.append(proc)
         return proc
-    
+
     #----------------#
     # MME-initiated  #
     # NAS procedures #
     #----------------#
-    
+
     def release_ctxt(self, cause=('nas', 'unspecified')):
         if self.ENB is None:
             self._log('INF', '[release] UE not connected')
         proc_s1 = self.init_s1_proc(UEContextRelease, Cause=cause)
         for pdu in proc_s1.output():
-            self.MME.send_enb(self.ENB.SK, pdu, uerel=True)        
-    
+            self.MME.send_enb(self.ENB.SK, pdu, uerel=True)
+
     def page(self):
         # ensures the UE is not already connected
         if self.ENB is not None:
@@ -1363,7 +1371,7 @@ class UEd(SigStack):
             # sending Paging to the enb
             enb.init_proc(Paging, **self._s1dl_struct['Kwargs'])
         self._s1dl_struct = None
-    
+
     def _run(self, proc, **kwargs):
         # this is to run an MME-initiated procedure, possibly paging the UE first
         if self.ENB is not None:
@@ -1384,19 +1392,19 @@ class UEd(SigStack):
             # UE not connected, buffer the procedure and page it
             self._proc_mme.append( (proc, kwargs) )
             self.page()
-    
+
     def __run_single(self, proc, **kwargs):
         proc_nas = self.init_nas_proc(proc, **kwargs)
         proc_s1 = self.init_s1_proc(DownlinkNASTransport, NAS_PDU=self.nas_output_sec(proc_nas.output()))
         for pdu in proc_s1.output():
             self.MME.send_enb(self.ENB.SK, pdu, uerel=True)
-    
-    
+
+
     #------------#
     # SMS-CP PDU #
     # dispatcher #
     #------------#
-    
+
     def process_smscp(self, cpstr):
         '''
         process the SMS-CP PDU, as received within the NAS Container within the Uplink NAS transport
@@ -1457,7 +1465,7 @@ class UEd(SigStack):
         else:
             proc = self.Proc['SMS'][tio]
             return map_bytes( proc.process(cppdu) )
-    
+
     def init_sms_proc(self, proc, **kwargs):
         if 'TIO' not in kwargs:
             # get any available TIO slot
@@ -1474,12 +1482,12 @@ class UEd(SigStack):
         if self.TRACE_SMS:
             self._proc.append(proc)
         return proc
-    
+
     #----------------#
     # MME-initiated  #
     # SMS procedures #
     #----------------#
-    
+
     def _run_smscpmt(self, **kwargs):
         proc_cp = self.init_sms_proc(SmsCpMt, **kwargs)
         proc_nas = self._run(NASDownlinkNASTransport, NASContainer=proc_cp.output())
