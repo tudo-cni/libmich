@@ -1246,7 +1246,6 @@ class UEd(SigStack):
                           repr(naspdu[3]), proc.Name))
                 return None
             elif (pd, ty) in self.Proc['EMM'][-1].Filter:
-                self._log('INF', '8===========================================D A')
                 proc = self.Proc['EMM'][-1]
                 # if the procedure ends, it will remove itself from the self.Proc list
                 ret_naspdu = proc.process(naspdu)
@@ -1278,7 +1277,6 @@ class UEd(SigStack):
                           repr(naspdu[3]), proc.Name))
                 return None
             elif (pd, ty) in self.Proc['ESM'][-1].Filter:
-                self._log('INF', '8===========================================D B')
                 proc = self.Proc['ESM'][-1]
                 ret_naspdu = proc.process(naspdu)
                 if ret_naspdu is None and self.Proc['ESM']:
@@ -1296,7 +1294,6 @@ class UEd(SigStack):
         #
         # 3) check for starting a new NAS procedure
         if ty in UESigProcDispatch:
-            self._log('INF', '8===========================================D C')
             proc = UESigProcDispatch[ty](self)
             if self.TRACE_NAS:
                 self._proc.append(proc)
@@ -1316,7 +1313,6 @@ class UEd(SigStack):
         #
         # 5) EMM / ESM message out of any procedure
         else:
-            self._log('INF', '8===========================================D D')
             self._log('TRACE_NAS_UL', naspdu.show())
             self._log('WNG', '[process_naspdu] unexpected NAS message (PD {0}, Type {1}), sending STATUS 98'.format(pd, ty))
             # Cause 98: Message type not compatible with the protocol state

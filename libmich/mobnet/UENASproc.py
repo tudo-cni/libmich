@@ -1019,10 +1019,6 @@ class Attach(UENASSigProc):
         # we always reassign GUTI, so an Attach complete is always expected
         self.init_timer()
 
-        self._log('INF', '8===========================================D PDU: {}'.format(hex(attacc)))
-        self._log('INF', '8===========================================D PDU: {}'.format(repr(attacc)))
-        self._log('INF', '8===========================================D PDU: {}'.format(attacc.show()))
-
         return attacc
 
     def _process_complete(self, naspdu):
@@ -1714,8 +1710,6 @@ class PDNConnectRequest(UENASSigProc):
         }
 
     def process(self, esmpdu):
-        self._log('INF', '8===========================================D Processing PDN connect request')
-        #
         self._trace('UL', esmpdu)
         # change ESM state
         self.UE.ESM['state'] = 'PROCEDURE-TRANSACTION-PENDING'
@@ -1763,7 +1757,6 @@ class PDNConnectRequest(UENASSigProc):
         # if acceptable, start a DefaultEPSBearerCtxtAct
         # otherwise, send a PDN CON REJECT
         trans = self.UE.ESM['trans'][self._tid]
-        self._log('INF', '8===========================================D {}\n{}'.format(self._tid, self.UE.ESM['trans']))
         cause = None
         ctxt = self.UE.nas_build_pdn_default_ctxt(trans['APN'])
         if ctxt is None:
@@ -1772,7 +1765,6 @@ class PDNConnectRequest(UENASSigProc):
             cause = 28 # unknown PDN type
         elif 'ProtConfigReq' not in trans:
             ip, pc = self.UE.nas_build_pdn_protconfig_ip_only(ctxt)
-            self._log('INF', '8===========================================D 31 reject, unspecified (no ProtConfig request)')
             #cause = 31 # reject, unspecified (no ProtConfig request)
         else:
             if trans['PDNType'] == 3:
@@ -1792,7 +1784,7 @@ class PDNConnectRequest(UENASSigProc):
         trans['ProcConfigResp'] = pc
         trans['ctxt'] = ctxt
         #
-        ebt = trans.get('EBT', 0)
+        ebt = trans.get('EBT', 5)
         if trans['APN'] is not None:
             apn = '{0}{1}'.format(chr(len(trans['APN'])), trans['APN'])
         else:
