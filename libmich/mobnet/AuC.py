@@ -100,7 +100,7 @@ class AuC:
         self._log('INF', 'Starting AuC')
         
         # open authentication database AuC.db
-        file_db = open('%s/AuC.db' % self.AuC_db_path)
+        file_db = open('%s/AuC.db' % self.AuC_db_path, 'r')
         # parse it into a dict object with IMSI as key
         self.db = {}
         
@@ -118,7 +118,7 @@ class AuC:
         file_db.close()
         
         # open authentication database AuC_2G.db
-        file_db = open('%s/AuC_2G.db' % self.AuC_db_path)
+        file_db = open('%s/AuC_2G.db' % self.AuC_db_path, 'r')
         # parse it into a dict object with IMSI as key
         self.db_2G = {}
         

@@ -64,7 +64,7 @@ class UES1SigProc(UESigProc):
     '''
     # to keep track of all PDU exchanged within the procedure, into the _pdu attribute
     # WNG: it will consume memory (nothing will be garbage-collected)
-    TRACE = True
+    TRACE = False
     
     # S1AP procedure code
     Code = None
@@ -729,11 +729,12 @@ class InitialContextSetup(UES1SigProc):
                 self._build_error_ind(Cause=('protocol', 'abstract-syntax-error-ignore-and-notify'))
             #
             # optional IEs
-            while ind < len(pIEs):
-                if pIEs[ind]['id'] == 48:
-                    # list of E-RAB the eNB failed to establish
-                    self._log('WNG', 'failed E-RAB: {1}'.format(pIEs[ind]['value'][1]))
-                    ind += 1
+            # TODO: Check if this is necessary
+            #while ind < len(pIEs):
+            #    if pIEs[ind]['id'] == 48:
+            #        # list of E-RAB the eNB failed to establish
+            #        self._log('WNG', 'failed E-RAB: {1}'.format(pIEs[ind]['value'][1]))
+            #        ind += 1
             #
             # unprocessed optional IEs
             opt = []

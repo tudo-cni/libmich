@@ -561,7 +561,7 @@ class GTPUd(object):
                             try:
                                 bufext = sk.recvfrom(self.BUFLEN)[0]
                             except timeout:
-                                # nothing to read enymore
+                                # nothing to read anymore
                                 r.remove(sk)
                             except error as err:
                                 self._log('ERR', 'external network IF error '\
