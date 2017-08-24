@@ -166,8 +166,8 @@ class UEd(SigStack):
     # ESM procedures standard behaviour
     ESM_APN_DEF = 'corenet' # default APN, when no APN is explicitely requested by the UE (must be defined in ESM_PDN too)
     ESM_APN_IP = True # assign the IP address for the given APN, even if an IP@ is not requested
-    ESM_BR_AGGR_BITRATE_DL = 100000000 # S1 parameter when setting up the DRB (bit/s)
-    ESM_BR_AGGR_BITRATE_UL =  50000000 # S1 parameter when setting up the DRB (bit/s)
+    ESM_BR_AGGR_BITRATE_DL = 10000000 # S1 parameter when setting up the DRB (bit/s)
+    ESM_BR_AGGR_BITRATE_UL =  5000000 # S1 parameter when setting up the DRB (bit/s)
     ESM_BR_DEF_REJ = 26 # default ESM cause when rejecting default bearer: 26:insufficient resources
     ESM_BR_DEDI_REJ = 60 # default ESM cause when rejecting dedicated bearer: 60:bearer handling not supported
     ESM_BR_DEACT = 36 # default ESM cause when deactivating EPS bearer: 36:regular deactivation
