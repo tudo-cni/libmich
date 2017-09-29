@@ -734,8 +734,8 @@ class InitialContextSetup(UES1SigProc):
             #    if pIEs[ind]['id'] == 48:
             #        # list of E-RAB the eNB failed to establish
             #        self._log('WNG', 'failed E-RAB: {1}'.format(pIEs[ind]['value'][1]))
-            #        ind += 1
-            #
+            #    ind += 1
+            
             # unprocessed optional IEs
             opt = []
             while ind < len(pIEs):
