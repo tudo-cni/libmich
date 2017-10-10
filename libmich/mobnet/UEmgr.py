@@ -1311,6 +1311,10 @@ class UEd(SigStack):
             self._log('TRACE_NAS_UL', naspdu.show())
             self._log('WNG', '[process_naspdu] ESM STATUS with cause: {0}'.format(repr(naspdu[3])))
         #
+        # 4.5) Attach Complete after Service Request
+        elif (pd, ty) == (7, 67):
+            self._log('TRACE_NAS_UL', naspdu.show())
+        #
         # 5) EMM / ESM message out of any procedure
         else:
             self._log('TRACE_NAS_UL', naspdu.show())
