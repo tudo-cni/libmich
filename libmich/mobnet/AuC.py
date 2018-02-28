@@ -72,11 +72,11 @@ class AuC:
     # self._log(logtype, msg)
     DEBUG = ('ERR', 'WNG', 'INF', 'DBG')
     
-    AuC_db_path = '%s/' % os.path.dirname(os.path.abspath( __file__ ))
-    #AuC_db_path = 'C:\Python27\Lib\sitepackages\HLR'
+    AuC_2G_db_path = '%s/' % os.path.dirname(os.path.abspath( __file__ ))
+    AuC_db_path = '%s/AuC.db' % os.path.dirname(os.path.abspath( __file__ ))
     
     # MNO OP diversification parameter
-    OP =  'ffffffffffffffff'
+    # OP =  'ffffffffffffffff'
     
     def __init__(self):
         self.start()
@@ -99,26 +99,28 @@ class AuC:
         self._running = True
         self._log('INF', 'Starting AuC')
         
-        # open authentication database AuC.db
-        file_db = open('%s/AuC.db' % self.AuC_db_path, 'r')
+        # open authentication database
+        file_db = open(self.AuC_db_path, 'r')
         # parse it into a dict object with IMSI as key
         self.db = {}
         
         for line in file_db:
-            if line [0] != '#' and line.count(';') >= 2:
-                fields = line.split(';')
-                IMSI    = str( fields[0] )
-                K       = unhexlify( fields[1] )
-                SQN     = int( fields[2] )
+            if line [0] != '#' and line.count(',') >= 2:
+                fields = line.split(',')
+                IMSI    = str( fields[1] )
+                K       = unhexlify( fields[2] )
+                self.OP      = unhexlify( fields[3] )
+                self.AMF     = unhexlify( fields[4] )
+                SQN     = int( fields[5] )
                 self.db[IMSI] = [ K, SQN ]
-        
+
         self._log('DBG', 'AuC.db file opened: {0} record(s) found'.format(
                   len(self.db.keys())))
         # close the file
         file_db.close()
         
         # open authentication database AuC_2G.db
-        file_db = open('%s/AuC_2G.db' % self.AuC_db_path, 'r')
+        file_db = open('%s/AuC_2G.db' % self.AuC_2G_db_path, 'r')
         # parse it into a dict object with IMSI as key
         self.db_2G = {}
         
@@ -151,7 +153,7 @@ class AuC:
         
         # get header from file AuC.db
         header = ''
-        file_db = open('%s/AuC.db' % self.AuC_db_path)
+        file_db = open(self.AuC_db_path)
         for line in file_db:
             if line[0] == '#': header += line
             else: break
@@ -159,11 +161,11 @@ class AuC:
         file_db.close()
         
         # save the last current version of AuC.db
-        os.rename( '%s/AuC.db' % self.AuC_db_path, '%s/AuC.db.%s' % (self.AuC_db_path, T) )
+        os.rename( self.AuC_db_path, self.AuC_db_path + '.T' )
         self._log('DBG', 'old AuC.db saved with timestamp')
         
         # save the current self.db into a new AuC.db file
-        file_db = open('%s/AuC.db' % self.AuC_db_path, 'w')
+        file_db = open(self.AuC_db_path, 'w')
         file_db.write( header )
         indexes = self.db.keys()
         indexes.sort()

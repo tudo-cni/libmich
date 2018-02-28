@@ -5,7 +5,17 @@
 # file used by AuC.py
 # 
 # csv'style file, with the following fields:
-# IMSI (digit), K (hex), SQN (int)
+# 
+# Name: Human readable name to help distinguish UE's. Largely ignored by the HSS
+# IMSI: UE's IMSI value
+# Key:  UE's key, where other keys are derived from. Stored in hexadecimal
+# OP:   Operator's code, stored in hexadecimal
+# AMF:  Authentication management feild, stored in hexadecimal
+# SQN: UE's Sequence number for freshness of the authentication 
 #
-001010000000001;000102030405060708090a0b0c0d0e0f;1
-001010000000002;0f0102030405060708090a0b0c0d0e00;1
+# Note: Lines starting by '#' are ignored
+# ue1,001010123456789,00112233445566778899aabbccddeeff,63BFA50EE6523365FF14C1F45F88737D,9001,000000001234
+# ue2,001010123456780,00112233445566778899aabbccddeeaa,63BFA50EE6523365FF14C1F45F88737D,8000,000000001235
+#
+ue01,001010123456789,465b5ce8b199b49faa5f0a2ee238a6bc,63bfa50ee6523365ff14c1f45f88737d,b9b9,1
+ue02,001010123456780,465b5ce8b199b49faa5f0a2ee238a6bc,63bfa50ee6523365ff14c1f45f88737d,b9b9,1
